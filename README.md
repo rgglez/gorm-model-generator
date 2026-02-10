@@ -1,6 +1,6 @@
 # gorm-model-generator
 
-`gmg` is a command line tool written in Go which generates models for GORM.
+`gmg` is a command line tool written in Go which generates [models](https://en.wikipedia.org/wiki/Object%E2%80%93relational_mapping) for [GORM](https://gorm.io/index.html).
 
 ## Build
 
@@ -24,8 +24,8 @@ $ make clean
 
 ## Command line arguments
 
-* `--dsn` the DSN for the connection. Examplle: `user:pass@tcp(localhost:3306)/dbname`.
-* `--type` the type of your database (mysql, postgres, sqlite).
+* `--dsn` the DSN for the connection. Example: `user:pass@tcp(localhost:3306)/dbname`.
+* `--type` the type of your database (`mysql`, `postgres`, `sqlite`).
 * `--output` the output directory.
 * `--tables` the table names (optional, comma-separated list of specific tables)
 

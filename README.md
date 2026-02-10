@@ -27,7 +27,7 @@ $ make clean
 * `--dsn` the DSN for the connection. Examplle: `user:pass@tcp(localhost:3306)/dbname`.
 * `--type` the type of your database (mysql, postgres, sqlite).
 * `--output` the output directory.
-* `--tables` the table name (optional, for a specific table)
+* `--tables` the table names (optional, comma-separated list of specific tables)
 
 ## Enviroment variables
 

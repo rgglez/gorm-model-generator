@@ -14,6 +14,8 @@ $ make build
 # make install
 ```
 
+installs the command to `/usr/local/bin/gmg`.
+
 ## Clean build
 
 ```bash

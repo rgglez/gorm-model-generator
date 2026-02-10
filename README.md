@@ -51,4 +51,6 @@ gmg --dsn='user:pass@tcp(localhost:3306)/mydatabase' --type=mysql --output=model
 
 Copyright (C) 2026 Rodolfo González González.
 
-Licensed under the Apache License, Version 2.0. Read the [LICENSE](LICENSE) file.
+Licensed under GPL-3.0. Read the [LICENSE](LICENSE) file for more information.
+
+

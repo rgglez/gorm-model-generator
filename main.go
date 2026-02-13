@@ -61,6 +61,9 @@ func generateStruct(outputPath, table, structName string, columns []Column, incl
 		if needsDataTypes {
 			file.WriteString("\t\"gorm.io/datatypes\"\n")
 		}
+		if includeBaseModel {
+			file.WriteString("\t\"gorm.io/gorm\"\n")
+		}
 		file.WriteString(")\n\n")
 	}
 
@@ -69,6 +72,10 @@ func generateStruct(outputPath, table, structName string, columns []Column, incl
 	file.WriteString(fmt.Sprintf("const %s = \"%s\"\n\n", constName, table))
 
 	file.WriteString(fmt.Sprintf("type %s struct {\n", structName))
+
+	if includeBaseModel {
+		file.WriteString("\tgorm.Model\n")
+	}
 
 	for _, col := range columns {
 		fieldName := toPascalCase(col.Name)

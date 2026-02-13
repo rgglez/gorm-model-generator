@@ -18,7 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import "strings"
+import (
+	"os/exec"
+	"strings"
+)
 
 // ----------------------------------------------------------------------------
 
@@ -50,4 +53,29 @@ func matchesAny(parts ...string) func(string) bool {
 		}
 		return false
 	}
+}
+
+// ----------------------------------------------------------------------------
+
+func cleanString(value string) string {
+	cleanValue := strings.ReplaceAll(value, "\n", " ")
+	cleanValue = strings.ReplaceAll(cleanValue, "\r", " ")
+	cleanValue = strings.ReplaceAll(cleanValue, "\t", " ")
+	cleanValue = strings.Join(strings.Fields(cleanValue), " ")
+
+	return cleanValue
+}
+
+// ----------------------------------------------------------------------------
+
+func formatGoFile(filename string) error {
+	// Try goimports first (it's better as it also organizes imports)
+	cmd := exec.Command("goimports", "-w", filename)
+	if err := cmd.Run(); err == nil {
+		return nil
+	}
+
+	// Fallback to gofmt
+	cmd = exec.Command("gofmt", "-w", filename)
+	return cmd.Run()
 }

@@ -66,6 +66,7 @@ var sqlTypeRules = []sqlTypeRule{
 	{matches: matchesAny("decimal", "numeric"), factory: constantTypeFactory("float64")},
 	{matches: matchesAny("float", "double"), factory: constantTypeFactory("float64")},
 	{matches: matchesAny("bool"), factory: constantTypeFactory("bool")},
+	{matches: matchesAny("enum", "set"), factory: constantTypeFactory("string")},
 	{matches: matchesAny("date", "time"), factory: constantTypeFactory("time.Time"), skipNullWrap: true},
 	{matches: matchesAny("json"), factory: constantTypeFactory("datatypes.JSON"), skipNullWrap: true},
 }

@@ -53,17 +53,22 @@ func (sqliteDialect) ColumnsQuery(table string) (string, []interface{}) {
 func (sqliteDialect) ScanColumn(rows *sql.Rows) (Column, error) {
 	var col Column
 	var cid int
-	var dfltValue interface{}
+	var dfltValue sql.NullString
 	var notNull int
 	var pk int
 
-	if err := rows.Scan(&cid, &col.Name, &col.Type, &notNull, &dfltValue, &pk); err != nil {
-		return Column{}, err
+	err := rows.Scan(&cid, &col.Name, &col.Type, &notNull, &dfltValue, &pk)
+	if err != nil {
+		return col, err
 	}
 
 	col.Nullable = notNull == 0
 	col.IsPrimary = pk == 1
+	col.IsAutoIncr = pk == 1 && strings.Contains(strings.ToUpper(col.Type), "INTEGER")
 	col.IsUnsigned = strings.Contains(strings.ToUpper(col.Type), "UNSIGNED")
+	col.Default = dfltValue
+	col.Comment = ""
+	col.EnumValues = ""
 
 	return col, nil
 }

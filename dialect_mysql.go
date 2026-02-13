@@ -45,24 +45,59 @@ func (mysqlDialect) TablesQuery() string {
 // ----------------------------------------------------------------------------
 
 func (mysqlDialect) ColumnsQuery(table string) (string, []interface{}) {
-	return "SHOW COLUMNS FROM " + table, nil
+	query := `SELECT
+		COLUMN_NAME,
+		COLUMN_TYPE,
+		IS_NULLABLE,
+		COLUMN_KEY,
+		COLUMN_DEFAULT,
+		EXTRA,
+		COLUMN_COMMENT
+	FROM INFORMATION_SCHEMA.COLUMNS
+	WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?
+	ORDER BY ORDINAL_POSITION`
+	return query, []interface{}{table}
 }
 
 // ----------------------------------------------------------------------------
 
 func (mysqlDialect) ScanColumn(rows *sql.Rows) (Column, error) {
 	var col Column
+	var columnType string // This contains the full type like "enum('0','1')"
 	var null, key, extra string
-	var dflt interface{}
+	var dfltValue sql.NullString
 
-	if err := rows.Scan(&col.Name, &col.Type, &null, &key, &dflt, &extra); err != nil {
-		return Column{}, err
+	err := rows.Scan(&col.Name, &columnType, &null, &key, &dfltValue, &extra, &col.Comment)
+	if err != nil {
+		return col, err
 	}
 
 	col.Nullable = null == "YES"
 	col.IsPrimary = key == "PRI"
 	col.IsAutoIncr = strings.Contains(extra, "auto_increment")
-	col.IsUnsigned = strings.Contains(strings.ToUpper(col.Type), "UNSIGNED")
+	col.IsUnsigned = strings.Contains(strings.ToUpper(columnType), "UNSIGNED")
+	col.Default = dfltValue
+
+	// Extract ENUM/SET values from COLUMN_TYPE
+	// COLUMN_TYPE comes as: "enum('0','1')" or "varchar(100)" or "int(11) unsigned"
+	if strings.HasPrefix(columnType, "enum(") {
+		col.EnumValues = columnType // Store full enum definition
+		col.Type = "enum"
+	} else if strings.HasPrefix(columnType, "set(") {
+		col.EnumValues = columnType // Store full set definition
+		col.Type = "set"
+	} else {
+		// For other types, extract base type (e.g., "varchar(100)" -> "varchar", "int(11) unsigned" -> "int")
+		col.Type = columnType
+		// Remove length specifiers and modifiers for type matching
+		if idx := strings.Index(col.Type, "("); idx != -1 {
+			col.Type = col.Type[:idx]
+		}
+		col.Type = strings.TrimSpace(strings.ToLower(col.Type))
+		// Remove "unsigned" from type for matching
+		col.Type = strings.Replace(col.Type, "unsigned", "", 1)
+		col.Type = strings.TrimSpace(col.Type)
+	}
 
 	return col, nil
 }

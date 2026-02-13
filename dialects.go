@@ -28,17 +28,6 @@ import (
 
 // ----------------------------------------------------------------------------
 
-type Column struct {
-	Name       string
-	Type       string
-	Nullable   bool
-	IsPrimary  bool
-	IsAutoIncr bool
-	IsUnsigned bool
-}
-
-// ----------------------------------------------------------------------------
-
 type dialect interface {
 	Open(dsn string) (*gorm.DB, error)
 	TablesQuery() string

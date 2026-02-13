@@ -101,3 +101,29 @@ func (mysqlDialect) ScanColumn(rows *sql.Rows) (Column, error) {
 
 	return col, nil
 }
+
+// ----------------------------------------------------------------------------
+
+func (mysqlDialect) ForeignKeysQuery(table string) (string, []interface{}) {
+	query := `SELECT
+		kcu.COLUMN_NAME,
+		kcu.REFERENCED_TABLE_NAME,
+		kcu.REFERENCED_COLUMN_NAME
+	FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu
+	WHERE kcu.TABLE_SCHEMA = DATABASE()
+		AND kcu.TABLE_NAME = ?
+		AND kcu.REFERENCED_TABLE_NAME IS NOT NULL
+	ORDER BY kcu.ORDINAL_POSITION`
+	return query, []interface{}{table}
+}
+
+// ----------------------------------------------------------------------------
+
+func (mysqlDialect) ScanForeignKey(rows *sql.Rows) (ForeignKey, error) {
+	var fk ForeignKey
+	err := rows.Scan(&fk.Column, &fk.ReferencedTable, &fk.ReferencedColumn)
+	if err != nil {
+		return fk, err
+	}
+	return fk, nil
+}

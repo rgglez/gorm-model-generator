@@ -33,6 +33,8 @@ type dialect interface {
 	TablesQuery() string
 	ColumnsQuery(table string) (string, []interface{})
 	ScanColumn(rows *sql.Rows) (Column, error)
+	ForeignKeysQuery(table string) (string, []interface{})
+	ScanForeignKey(rows *sql.Rows) (ForeignKey, error)
 }
 
 // ----------------------------------------------------------------------------

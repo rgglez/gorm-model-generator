@@ -28,108 +28,6 @@ import (
 
 // ----------------------------------------------------------------------------
 
-func generateStruct(outputPath, table, structName string, columns []Column, includeBaseModel bool) string {
-	filename := fmt.Sprintf("%s/%s.go", outputPath, table)
-
-	file, err := os.Create(filename)
-	if err != nil {
-		fmt.Printf("Error creating file: %v\n", err)
-		return ""
-	}
-	defer file.Close()
-
-	// Check if we need to import time or datatypes
-	needsTime := false
-	needsDataTypes := false
-	for _, col := range columns {
-		goType := mapSQLTypeToGo(col.Type, col.Nullable, col.IsUnsigned)
-		if strings.Contains(goType, "time.Time") {
-			needsTime = true
-		}
-		if strings.Contains(goType, "datatypes.") {
-			needsDataTypes = true
-		}
-	}
-
-	// Write package and imports
-	file.WriteString("package models\n\n")
-	if needsTime || needsDataTypes {
-		file.WriteString("import (\n")
-		if needsTime {
-			file.WriteString("\t\"time\"\n")
-		}
-		if needsDataTypes {
-			file.WriteString("\t\"gorm.io/datatypes\"\n")
-		}
-		if includeBaseModel {
-			file.WriteString("\t\"gorm.io/gorm\"\n")
-		}
-		file.WriteString(")\n\n")
-	}
-
-	// Add table name constant
-	constName := fmt.Sprintf("TableName_%s", structName)
-	file.WriteString(fmt.Sprintf("const %s = \"%s\"\n\n", constName, table))
-
-	file.WriteString(fmt.Sprintf("type %s struct {\n", structName))
-
-	if includeBaseModel {
-		file.WriteString("\tgorm.Model\n")
-	}
-
-	for _, col := range columns {
-		fieldName := toPascalCase(col.Name)
-		goType := mapSQLTypeToGo(col.Type, col.Nullable, col.IsUnsigned)
-
-		tags := fmt.Sprintf("`gorm:\"column:%s", col.Name)
-
-		// Add type information for ENUM and SET
-		if col.EnumValues != "" {
-			tags += fmt.Sprintf(";type:%s", col.EnumValues)
-		}
-
-		if col.IsPrimary {
-			tags += ";primaryKey"
-		}
-		if col.IsAutoIncr {
-			tags += ";autoIncrement"
-		}
-		if !col.Nullable {
-			tags += ";not null"
-		}
-		if col.IsUnsigned {
-			tags += ";unsigned"
-		}
-
-		// Add default value
-		if col.Default.Valid {
-			defaultVal := col.Default.String
-			// Remove quotes if present (MySQL returns defaults with quotes for strings/enums)
-			defaultVal = strings.Trim(defaultVal, "'\"")
-			tags += fmt.Sprintf(";default:%s", defaultVal)
-		}
-
-		// Add comment
-		if col.Comment != "" {
-			cleanComment := cleanString(col.Comment)
-			tags += fmt.Sprintf(";comment:%s", cleanComment)
-		}
-
-		tags += "\"`"
-
-		file.WriteString(fmt.Sprintf("\t%s %s %s\n", fieldName, goType, tags))
-	}
-
-	file.WriteString("}\n\n")
-	file.WriteString(fmt.Sprintf("func (%s) TableName() string {\n", structName))
-	file.WriteString(fmt.Sprintf("\treturn %s\n", constName))
-	file.WriteString("}\n")
-
-	return filename
-}
-
-// ----------------------------------------------------------------------------
-
 func main() {
 	dsn := flag.String("dsn", "", "Database DSN connection string")
 	dbType := flag.StringP("type", "t", "mysql", "Database type (mysql, postgres, sqlite)")
@@ -198,9 +96,15 @@ func main() {
 			fmt.Printf("  Error: %v\n", err)
 			continue
 		}
+		foreignKeys, err := getForeignKeys(db, table, d)
+		if err != nil {
+			fmt.Printf("  Warning: could not read foreign keys: %v\n", err)
+			foreignKeys = nil
+		}
+		foreignKeys = mergeForeignKeys(foreignKeys, inferForeignKeys(table, columns, tables))
 
 		structName := toPascalCase(table)
-		filename := generateStruct(*outputPath, table, structName, columns, *includeBaseModel)
+		filename := generateStruct(*outputPath, table, structName, columns, foreignKeys, *includeBaseModel)
 
 		// Format the generated file
 		if err := formatGoFile(filename); err != nil {

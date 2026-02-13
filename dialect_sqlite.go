@@ -72,3 +72,23 @@ func (sqliteDialect) ScanColumn(rows *sql.Rows) (Column, error) {
 
 	return col, nil
 }
+
+// ----------------------------------------------------------------------------
+
+func (sqliteDialect) ForeignKeysQuery(table string) (string, []interface{}) {
+	return "PRAGMA foreign_key_list(" + table + ")", nil
+}
+
+// ----------------------------------------------------------------------------
+
+func (sqliteDialect) ScanForeignKey(rows *sql.Rows) (ForeignKey, error) {
+	var fk ForeignKey
+	var id, seq int
+	var onUpdate, onDelete, match string
+
+	err := rows.Scan(&id, &seq, &fk.ReferencedTable, &fk.Column, &fk.ReferencedColumn, &onUpdate, &onDelete, &match)
+	if err != nil {
+		return fk, err
+	}
+	return fk, nil
+}

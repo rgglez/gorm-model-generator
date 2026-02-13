@@ -48,7 +48,8 @@ $ make clean
 * `--dsn` the DSN for the connection. Example: `user:pass@tcp(localhost:3306)/dbname`.
 * `--type` the type of your database (`mysql`, `postgres`, `sqlite`).
 * `--output` the output directory.
-* `--tables` the table names (optional, comma-separated list of specific tables)
+* `--tables` the table names (optional, comma-separated list of specific tables).
+* `--include-base` optional, includes `gorm.Model` in every generated struct.
 
 ## Enviroment variables
 
@@ -74,5 +75,4 @@ gmg --type=mysql --output=models/ --tables=users,posts
 Copyright (C) 2026 Rodolfo González González.
 
 Licensed under GPL-3.0. Read the [LICENSE](LICENSE) file for more information.
-
 
